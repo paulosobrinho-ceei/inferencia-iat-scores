@@ -6,7 +6,10 @@ output:
     code_folding: hide
 theme: sandstone
 params: 
-    arquivo_dados: "data/sdsu.csv"
+#    arquivo_dados: "data/sdsu.csv"
+     arquivo_dados: "data/lse.csv"    
+ 
+
 ---
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
@@ -22,9 +25,40 @@ knitr::opts_chunk$set(tidy = FALSE,
 
 ```
 
+## L3P1: Interpretando ICs
+
+---
+
+**Universidade escolhida foi London School of Economics and Political Science (LSE), London, UK. Conforme descrito pelo link https://osf.io/g3udn/ e representado pelo data/lse.csv**
+
+
+---
+
+
+
+## Introdução à inferência estatística
+
+---
+
+Os dados do o experimento foi replicado em mais de 30 laboratórios pelo mundo. O experimento está descrito através do link <https://osf.io/wx7ck/> e para os dados originais é estão em <https://osf.io/nqg97/>. Foi  adaptado uma versão tratada disponível e criada por Robert J Calin-Jageman e colegas para o Workshop de Ensino da Nova Estatística, no qual estão disponível no repositório <https://github.com/cienciadedados-ufcg/inferencia-iat-scores.git>.
+
+O estudo do 1o link replica diversos experimentos da psicologia. O que conecta aqui é: "Diferenças sexuais em atitudes matemáticas implícitas (Nosek, Banaji, & Greenwald, 2002). Como uma possível explicação para a diferença de sexo na participação em ciências e matemática, Nosek e colegas (2002) descobriram que as mulheres tinham mais atitudes implícitas negativas em relação à matemática em comparação com as artes do que os homens em dois estudos com alunos de graduação de Yale. Os participantes completaram quatro Testes de Associação Implícita (IATs) em ordem aleatória, um dos quais mediu associações de matemática e artes com positividade e negatividade. A replicação simplificou o design para que o comprimento seja apenas um único IAT. "
+
+Sobre o teste IAT usado, uma wikipedia diz o seguinte: "O teste de associação implícita (IAT) é uma avaliação controversa no campo da psicologia social destinada a detectar a força da associação subconsciente de uma pessoa entre representações mentais de objetos (conceitos) em memória. É comumente aplicado para avaliar estereótipos implícitos mantidos por assuntos de teste, como inconscientemente associar nomes negros estereotipados com palavras consistentes com estereótipos negros ".
+
+Os dados em data/ têm uma coluna chamada d_art que é o principal resultado do IAT. Em uma escala de -1 a 1, essa medida quantifica quanta aversão a mátemática cada participante tem em comparação com arte. O valor +1 é a maior aversão a Matemática em comparação com Arte, enquanto -1 é a maior preferência por Matemática em comparação com Arte. O zero significa indiferença.
+
+---
+
+
+
+
 ## Referências para interpretar o IAT
 
-IAT: absolute d of 0.15, 0.35, and 0.65 are considered small, medium, and large level of bias for individual scores. Positive d means bias towards arts / against Math.
+
+IAT: d absoluto de 0,15, 0,35 e 0,65 são considerados níveis de enviesamento pequeno, médio e grande para pontuações individuais. D positivo significa inclinação para as artes / contra a matemática.
+
+
 
 ## Análise de uma replicação
 
@@ -40,9 +74,51 @@ iat %>%
   ggplot(aes(x = d_art, fill = sex, color = sex)) +
   geom_histogram(binwidth = .2, alpha = .4, boundary = 0) +
   geom_rug() +
-  facet_grid(sex ~ ., scales = "free_y") +
+  facet_grid(sex ~., scales = "free_y") +
   labs(title = "Distribuição de d_art") + 
   theme(legend.position = "None")
+```
+
+
+```{r}
+Desvio_Padrao_M = iat %>%
+  filter (sex == "m") %>%
+  select (d_art)
+  
+# Desvio padrão
+sd(Desvio_Padrao_M$d_art)
+
+```
+
+```{r}
+Desvio_Padrao_F = iat %>%
+  filter (sex == "f") %>%
+  select (d_art)
+  
+# Desvio padrão
+sd(Desvio_Padrao_F$d_art)
+
+```
+
+---
+
+Total de registros
+
+---
+
+
+```{r}
+
+Total =  length(iat$sex)
+
+```
+
+
+
+```{r}
+
+iat %>% count(sex) %>% mutate (Percentual = round ((n / Total) * 100))
+
 ```
 
 
@@ -58,7 +134,9 @@ iat %>%
 iat %>% 
     ggplot(aes(x = sex, y = d_art)) + 
     geom_quasirandom(width = .1) + 
-    stat_summary(geom = "point", fun = "mean", color = "red", size = 5) + 
+    stat_summary(geom = "point", fun = "mean", color = "red", size = 5) +
+    stat_summary(geom = "point", fun = "median", color = "blue", size = 5) +   
+
   labs(title = "Distribuição e média (ponto vermelho) de d_art na amostra")
 ```
 
@@ -79,6 +157,25 @@ m = agrupado %>% filter(sex == "m") %>% pull(media)
 f = agrupado %>% filter(sex == "f") %>% pull(media)
 m - f
 ```
+
+
+```{r}
+agrupado2 = iat %>% 
+    group_by(sex) %>% 
+    summarise(mediana = median(d_art), 
+              .groups = "drop")
+
+agrupado2
+```
+
+
+```{r}
+mm = agrupado2 %>% filter(sex == "m") %>% pull(mediana)
+ff = agrupado2 %>% filter(sex == "f") %>% pull(mediana)
+mm - ff
+```
+
+
 
 #### Comparação via ICs
 
@@ -122,11 +219,18 @@ ci %>%
          y = "IAT homens - mulheres")
 ```
 
+--- 
+
+**(2) A seguir é apresentado o gráfico contendo as informações já calculadas do campo d_arts, suas médias e medianas. Também contém a diferença para o IAT homens - mulheres.**
+
+---
+
 ```{r}
 p1 = iat %>% 
     ggplot(aes(x = sex, y = d_art)) +
     geom_quasirandom(width = .1, alpha = .7) + 
-    stat_summary(geom = "point", fun = "mean", color = "red", size = 5)
+    stat_summary(geom = "point", fun = "mean", color = "red", size = 5) +
+    stat_summary(geom = "point", fun = "median", color = "blue", size = 5)
 
 p2 = ci %>%
     ggplot(aes(
@@ -144,17 +248,48 @@ p2 = ci %>%
 grid.arrange(p1, p2, ncol = 2)
 
 ```
+<!--
 
 ### Conclusão
+
 
 **Apague esse parágrafo, e no seguinte substitua no mínimo as partes em negrito por texto seu. Pode substituir o quanto quiser**.
 
 Em média, as mulheres que participaram do experimento tiveram uma associação implícita (medida pelo IAT) com a matemática **positiva/negativa** e **fraca/média/forte** (**média XXX, desv. padrão YYY, N = ZZZ**). Homens tiveram uma associação **positiva/negativa** com a matemática, portanto **maior/menor** que a das mulheres (**média XXX , desv. padrão YYY, N = ZZZ**). Houve portanto uma **grande/considerável/pequena/desprezível** diferença entre homens e mulheres (**diferença das médias XXXX, 95% CI [CCC, DDD]**). Os dados de nosso experimento portanto apontam que... **COMPLETE AQUI**.
 
+
 --- 
+
 *Exemplos de possíveis conclusões para completar*
 
   * mulheres têm uma associação negativa consideravelmente mais forte, com uma diferença que provavelmente está entre 0.6 e 1.0 ponto na escala IAT, o suficiente para diferenciar uma associação neutra de uma muito forte contra a matemática.
+  
+  
   * mulheres têm uma associação negativa mais forte, porém não é claro se essa diferença é grande, moderada ou pequena. É necessário coletar mais dados para determinar se a diferença é relevante ou negligenciável. 
   * mulheres podem ter um associação negativa forte, pode não haver diferença entre sexos ou homens podem ter atitudes negativas um pouco mais fortes ou moderadamente mais fortes. 
   * não há evidência clara de uma diferença relevante entre sexos: os dados apontam que ela pode não existir e, se ela existir, ela é pequena em qualquer das direções. 
+  
+  
+  
+
+
+-->
+
+---
+
+
+**(3) Conclusão sobre a interpretação das informações apresentadas nos itens (1) e (2).**
+
+
+**Tomando como base o estudo das “Diferenças sexuais em atitudes matemáticas implícitas” aplicada para London School of Economics and Political Science, London, UK, analisou-se o viés a aversão à Matemática relativo a arte e a preferência à Matemática relativo à Arte entre homens e mulheres. Também, considerou-se o viés à indiferença de ambos os sexos.**
+
+**A amostra contém N=267, sendo através do campo “sex’ divida em dois grupos (homens =”m" e mulheres = “f”) e analisado 91 homens e 176 mulheres, posteriormente foram extraídas as informações do campo d_art que é o principal resultado do IAT. O score médio para os homens foi de 0,160 e o score médio para as mulheres foi de 0,522. Verifica-se que há, em média, um maior viés para aversão à Matemática relativo a Artes para as mulheres do que para os homens. Entretanto, observa-se uma maior variabilidade dos scores individuais em torno da média para os homens relativo a amostra de mulheres. O desvio-padrão na amostra de scores dos homens foi de 0.4826767 e o desvio-padrão na amostra das mulheres foi de 0.4526697. Observando a ilustração do gráfico do histograma para os scores dos homens e mulheres, foi possível observar que grande parte das mulheres possuem scores positivos, indicando uma associação implícita positiva e média, ou seja, um viés à aversão à Matemática em relação à Arte. Verificou-se que também existe uma proporção elevada de aversão à matemática para os homens, porém relativamente menor comparando com o grupo de mulheres. No histograma para a amostra de gênero masculino, percebe-se que há uma elevada frequência de scores negativo, porém próximos de zero. Na classificação do estudo, isso significa que podem ser indivíduos indiferentes à Matemática. Para o gênero feminino, existe uma frequência maior de scores próximos de um (positivo) e uma frequência menor de indivíduos femininos indiferentes.**
+
+**Considerando o intervalo de confiança para as diferenças das médias dos scores entre os grupos masculino e feminino com nível de confiança de 95%, o limite inferior foi de -0.4870854 e o limite superior foi de -0.247947. Isso quer dizer que esse intervalo de confiança contém a diferença das médias com probabilidade de 95%. A amostra parece indicar que existe uma diferença pequena entre os scores dos dois grupos está dentro desse intervalo.**
+
+**Outra informação relevante as amostras estudadas sobre o grupo de indivíduos pesquisados, no caso, para o sex = “m” (91 indíviduos | 34%) é menor a soma das resultado da frequências e com informações com poucas diferenças de variações para o campo d_vars que pode indicar ou refletir a necessidade de aplicação processo do experimento, mas com novas amostras. E, para sex = “f” (176 indivíduos | 66%) é muito maior a soma dos resultados das frequências comparado ao primeiro grupo. Portanto, para cada grupo, mesmo sem outlines e com valores próximos entre a mediana (utilizado apenas de maneira exploratória) e a média, ainda assim, as diferenças apontadas pelas somas de frequências são de m = 34% e f = 66% o que podem influenciar neste caso entre a comparação dos grupos, por causa, que envolve médias e sendo que neste experimento para o grupo “f” é quase que o dobro de “m”, o ideal seria ter mais/novas amostras para “m” ou menos para “f” para obtenção de d_vars com representatividade melhor adequada para variabilidade entre os grupos pesquisados.**
+
+
+---
+
+
